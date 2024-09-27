@@ -34,35 +34,35 @@ Ce projet est une application Laravel permettant de gérer les commandes de clie
 ### Installation
 
 1. Clonez ce dépôt dans votre machine locale :
-  
+   ```bash
    git clone https://github.com/zachzic/gestion-commandes.git
-   
+   ```
 
 2. Installez les dépendances du projet via Composer :
-  
+   ```bash
    cd gestion-commandes
    composer install
-   
+   ```
 
 3. Configurez votre environnement en copiant le fichier `.env.example` vers `.env` :
-  
+   ```bash
    cp .env.example .env
-   
+   ```
 
 4. Générez la clé d'application Laravel :
-  
+   ```bash
    php artisan key:generate
-   
+   ```
 
 5. Démarrez le serveur de développement Laravel :
-  
+   ```bash
    php artisan serve
-   
+   ```
 
 6. Accédez à l'application via votre navigateur à l'adresse :
-   
+   ```
    http://127.0.0.1:8000
-   
+   ```
 
 ### Utilisation des fichiers XML
 
