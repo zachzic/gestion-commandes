@@ -36,6 +36,12 @@
         <a href="{{ route('commandes.index', ['filter' => 'unpaid']) }}" class="btn {{ $filter === 'unpaid' ? 'btn-blue' : 'btn-gray' }}">Non payées</a>
     </div>
 
+    <div style="margin-bottom: 20px;">
+        <input type="text" id="searchClient" placeholder="Rechercher par client" style="padding: 5px; margin-right: 10px;">
+        <input type="text" id="searchCommande" placeholder="Rechercher par numéro de commande" style="padding: 5px; margin-right: 10px;">
+        <button onclick="searchCommandes()" class="btn btn-blue">Rechercher</button>
+    </div>
+
     <table class="table">
         <thead>
             <tr>
@@ -47,7 +53,7 @@
                 <th>Actions</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="commandesTableBody">
         @foreach($commandes as $commande)
         <tr data-id="{{ $commande->id }}"
             data-client="{{ $commande->client }}"
@@ -65,7 +71,7 @@
                     @endforeach
                 </ul>
             </td>
-            <td>{{ $commande->montant }} </td>
+            <td>{{ $commande->montant }} €</td>
             <td>
                 <span class="badge {{ $commande->paye == 'oui' ? 'badge-green' : 'badge-red' }}">
                     {{ $commande->paye == 'oui' ? 'Payée' : 'Non payée' }}
@@ -125,26 +131,35 @@
     <div class="modal-content">
         <span class="close" onclick="closeModal('productListModal')">&times;</span>
         <h2 style="margin-bottom: 20px;">Liste des produits</h2>
-        <ul style="list-style-type: none; padding-left: 0;">
-            @foreach($produits as $produit)
-                <li style="padding: 10px; border-bottom: 1px solid #eee;">
-                    <strong>{{ $produit->libelle }}</strong> - {{ $produit->prix }} 
-                </li>
-            @endforeach
-        </ul>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="border: 1px solid #ddd; padding: 12px; background-color: #f2f2f2; text-align: left;">ID</th>
+                    <th style="border: 1px solid #ddd; padding: 12px; background-color: #f2f2f2; text-align: left;">Libellé</th>
+                    <th style="border: 1px solid #ddd; padding: 12px; background-color: #f2f2f2; text-align: left;">Prix</th>
+                    <th style="border: 1px solid #ddd; padding: 12px; background-color: #f2f2f2; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 12px; background-color: #f2f2f2; text-align: left;">Description</th>
+                    <th style="border: 1px solid #ddd; padding: 12px; background-color: #f2f2f2; text-align: left;">Disponibilité</th>
+                    <th style="border: 1px solid #ddd; padding: 12px; background-color: #f2f2f2; text-align: left;">SKU</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($produits as $produit)
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 12px;">{{ $produit->id }}</td>
+                        <td style="border: 1px solid #ddd; padding: 12px;">{{ $produit->libelle }}</td>
+                        <td style="border: 1px solid #ddd; padding: 12px;">{{ $produit->prix }} </td>
+                        <td style="border: 1px solid #ddd; padding: 12px;">{{ $produit->type }}</td>
+                        <td style="border: 1px solid #ddd; padding: 12px;">{{ $produit->description }}</td>
+                        <td style="border: 1px solid #ddd; padding: 12px;">{{ $produit->disponibilite }}</td>
+                        <td style="border: 1px solid #ddd; padding: 12px;">{{ $produit->sku }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
     </div>
 </div>
 
-<!-- Modal Détails de la commande -->
-<div id="commandeDetailsModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeModal('commandeDetailsModal')">&times;</span>
-        <h2 style="margin-bottom: 20px;">Détails de la commande</h2>
-        <div id="commandeDetailsContent">
-            <!-- Le contenu sera chargé dynamiquement ici -->
-        </div>
-    </div>
-</div>
 
 @section('scripts')
 <script>
@@ -191,47 +206,25 @@
         }
     }
 
-    function openCommandeDetailsModal(button) {
-    const row = button.closest('tr');
-    const commandeId = row.getAttribute('data-id');
-    console.log('ID de la commande:', commandeId);
-    
-    fetch(`/commandes/${commandeId}/details`)
-        .then(response => {
-            console.log('Réponse reçue:', response);
-            if (!response.ok) {
-                return response.text().then(text => {
-                    throw new Error(`Erreur HTTP: ${response.status}. Détails: ${text}`);
-                });
+
+    function searchCommandes() {
+        const searchClient = document.getElementById('searchClient').value.toLowerCase();
+        const searchCommande = document.getElementById('searchCommande').value.toLowerCase();
+        const rows = document.querySelectorAll('#commandesTableBody tr');
+
+        rows.forEach(row => {
+            const client = row.getAttribute('data-client').toLowerCase();
+            const commandeId = row.getAttribute('data-id').toLowerCase();
+            const matchClient = client.includes(searchClient);
+            const matchCommande = commandeId.includes(searchCommande);
+
+            if ((searchClient === '' || matchClient) && (searchCommande === '' || matchCommande)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
             }
-            return response.json();
-        })
-        .then(commande => {
-            console.log('Données de la commande:', commande);
-            // Remplir le modal avec les détails de la commande
-            const content = document.getElementById('commandeDetailsContent');
-            content.innerHTML = `
-                <p><strong>ID de la commande:</strong> ${commande.id}</p>
-                <p><strong>Client:</strong> ${commande.client}</p>
-                <p><strong>Montant:</strong> ${commande.montant} €</p>
-                <p><strong>Statut:</strong> ${commande.paye === 'oui' ? 'Payée' : 'Non payée'}</p>
-                <h3>Produits:</h3>
-                <ul>
-                    ${commande.produits.map(produit => `
-                        <li>ID: ${produit.id}, Quantité: ${produit.quantite}</li>
-                    `).join('')}
-                </ul>
-            `;
-            
-            // Afficher le modal
-            const modal = document.getElementById('commandeDetailsModal');
-            modal.style.display = "block";
-        })
-        .catch(error => {
-            console.error('Erreur détaillée:', error);
-            alert('Une erreur est survenue lors de la récupération des détails de la commande. Vérifiez la console pour plus de détails.');
         });
-}
+    }
 </script>
 @endsection
 @endsection
