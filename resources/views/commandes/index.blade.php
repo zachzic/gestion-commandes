@@ -2,68 +2,7 @@
 
 @section('title', 'Gestion des Commandes')
 
-@section('styles')
-<style>
-    .btn { display: inline-block; padding: 10px 15px; margin: 5px; text-decoration: none; color: white; border-radius: 5px; cursor: pointer; transition: background-color 0.3s; }
-    .btn-green { background-color: #4CAF50; }
-    .btn-purple { background-color: #9C27B0; }
-    .btn-gray { background-color: #9E9E9E; color: black; }
-    .btn-blue { background-color: #2196F3; }
-    .btn-red { background-color: #F44336; }
-    .btn:hover { opacity: 0.8; }
-    .table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
-    .table th, .table td { border: none; padding: 12px; text-align: left; }
-    .table th { background-color: #f2f2f2; font-weight: bold; }
-    .table tr:nth-child(even) { background-color: #f8f8f8; }
-    .table tr:hover { background-color: #e8e8e8; }
-    .badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-    .badge-green { background-color: #E8F5E9; color: #4CAF50; }
-    .badge-red { background-color: #FFEBEE; color: #F44336; }
-    .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
-    .modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-    .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
-    .close:hover { color: black; }
-    .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-    .form-group input, .form-group select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
-    .active-filter { background-color: #2196F3; color: white; }
-    .alert { padding: 15px; margin-bottom: 20px; border: 1px solid transparent; border-radius: 4px; }
-    .alert-success { background-color: #dff0d8; border-color: #d6e9c6; color: #3c763d; }
-    .alert-danger { background-color: #f2dede; border-color: #ebccd1; color: #a94442; }
-</style>
-@endsection
 @section('content')
-<style>
-    body { font-family: 'Arial', sans-serif; background-color: #f4f4f4; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-    .btn { display: inline-block; padding: 10px 15px; margin: 5px; text-decoration: none; color: white; border-radius: 5px; cursor: pointer; transition: background-color 0.3s; }
-    .btn-green { background-color: #4CAF50; }
-    .btn-purple { background-color: #9C27B0; }
-    .btn-gray { background-color: #9E9E9E; color: black; }
-    .btn-blue { background-color: #2196F3; }
-    .btn-red { background-color: #F44336; }
-    .btn:hover { opacity: 0.8; }
-    .table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
-    .table th, .table td { border: none; padding: 12px; text-align: left; }
-    .table th { background-color: #f2f2f2; font-weight: bold; }
-    .table tr:nth-child(even) { background-color: #f8f8f8; }
-    .table tr:hover { background-color: #e8e8e8; }
-    .badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-    .badge-green { background-color: #E8F5E9; color: #4CAF50; }
-    .badge-red { background-color: #FFEBEE; color: #F44336; }
-    .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
-    .modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-    .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
-    .close:hover { color: black; }
-    .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-    .form-group input, .form-group select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
-    .active-filter { background-color: #2196F3; color: white; }
-    .alert { padding: 15px; margin-bottom: 20px; border: 1px solid transparent; border-radius: 4px; }
-    .alert-success { background-color: #dff0d8; border-color: #d6e9c6; color: #3c763d; }
-    .alert-danger { background-color: #f2dede; border-color: #ebccd1; color: #a94442; }
-</style>
-
 <div class="container">
     <h1 style="font-size: 28px; margin-bottom: 20px; color: #333;">Gestion des Commandes</h1>
 
@@ -110,19 +49,37 @@
         </thead>
         <tbody>
         @foreach($commandes as $commande)
-        <tr>
+        <tr data-id="{{ $commande->id }}"
+            data-client="{{ $commande->client }}"
+            data-montant="{{ $commande->montant }}"
+            data-paye="{{ $commande->paye }}"
+            data-produits="{{ json_encode($commande->produits) }}">
             <td>{{ $commande->id }}</td>
             <td>{{ $commande->client }}</td>
             <td>
-                <button onclick="openCommandeDetailsModal('{{ $commande->id }}')" class="btn btn-blue">Voir détails</button>
+                <ul>
+                    @foreach($commande->produits->produit as $produit)
+                        <li>
+                            Produit ID: {{ $produit->id }} - Quantité: {{ $produit->quantite }}
+                        </li>
+                    @endforeach
+                </ul>
             </td>
-            <td>{{ $commande->montant }} €</td>
+            <td>{{ $commande->montant }} </td>
             <td>
                 <span class="badge {{ $commande->paye == 'oui' ? 'badge-green' : 'badge-red' }}">
                     {{ $commande->paye == 'oui' ? 'Payée' : 'Non payée' }}
                 </span>
             </td>
             <td>
+                @if($commande->paye == 'non')
+                    <form action="{{ route('commandes.confirmer', $commande->id) }}" method="POST" style="display: inline;">
+                        @csrf
+                        @method('PATCH')
+                        <button type="submit" class="btn btn-green" onclick="return confirm('Êtes-vous sûr de vouloir confirmer cette commande ?')">Confirmer</button>
+                    </form>
+                @endif
+
                 <form action="{{ route('commandes.destroy', $commande->id) }}" method="POST" style="display: inline;">
                     @csrf
                     @method('DELETE')
@@ -133,6 +90,7 @@
         @endforeach
         </tbody>
     </table>
+
 </div>
 
 <!-- Modal Ajouter une commande -->
@@ -170,7 +128,7 @@
         <ul style="list-style-type: none; padding-left: 0;">
             @foreach($produits as $produit)
                 <li style="padding: 10px; border-bottom: 1px solid #eee;">
-                    <strong>{{ $produit->libelle }}</strong> - {{ $produit->prix }} €
+                    <strong>{{ $produit->libelle }}</strong> - {{ $produit->prix }} 
                 </li>
             @endforeach
         </ul>
@@ -233,26 +191,47 @@
         }
     }
 
-    function openCommandeDetailsModal(commandeId) {
-        const modal = document.getElementById('commandeDetailsModal');
-        const content = document.getElementById('commandeDetailsContent');
-        
-        // Ici, vous devriez faire une requête AJAX pour obtenir les détails de la commande
-        // Pour cet exemple, nous allons simuler le contenu
-        content.innerHTML = `
-            <p><strong>ID de la commande:</strong> ${commandeId}</p>
-            <p><strong>Client:</strong> Nom du client</p>
-            <p><strong>Produits:</strong></p>
-            <ul>
-                <li>Produit 1 - Quantité: 2</li>
-                <li>Produit 2 - Quantité: 1</li>
-            </ul>
-            <p><strong>Montant total:</strong> XX.XX €</p>
-            <p><strong>Statut:</strong> Payée/Non payée</p>
-        `;
-        
-        modal.style.display = "block";
-    }
+    function openCommandeDetailsModal(button) {
+    const row = button.closest('tr');
+    const commandeId = row.getAttribute('data-id');
+    console.log('ID de la commande:', commandeId);
+    
+    fetch(`/commandes/${commandeId}/details`)
+        .then(response => {
+            console.log('Réponse reçue:', response);
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`Erreur HTTP: ${response.status}. Détails: ${text}`);
+                });
+            }
+            return response.json();
+        })
+        .then(commande => {
+            console.log('Données de la commande:', commande);
+            // Remplir le modal avec les détails de la commande
+            const content = document.getElementById('commandeDetailsContent');
+            content.innerHTML = `
+                <p><strong>ID de la commande:</strong> ${commande.id}</p>
+                <p><strong>Client:</strong> ${commande.client}</p>
+                <p><strong>Montant:</strong> ${commande.montant} €</p>
+                <p><strong>Statut:</strong> ${commande.paye === 'oui' ? 'Payée' : 'Non payée'}</p>
+                <h3>Produits:</h3>
+                <ul>
+                    ${commande.produits.map(produit => `
+                        <li>ID: ${produit.id}, Quantité: ${produit.quantite}</li>
+                    `).join('')}
+                </ul>
+            `;
+            
+            // Afficher le modal
+            const modal = document.getElementById('commandeDetailsModal');
+            modal.style.display = "block";
+        })
+        .catch(error => {
+            console.error('Erreur détaillée:', error);
+            alert('Une erreur est survenue lors de la récupération des détails de la commande. Vérifiez la console pour plus de détails.');
+        });
+}
 </script>
 @endsection
 @endsection

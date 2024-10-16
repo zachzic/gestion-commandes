@@ -4,6 +4,7 @@ namespace App\Services;
 
 use SimpleXMLElement;
 use Exception;
+use Illuminate\Support\Facades\Log; 
 
 class CommandeService
 {
@@ -37,12 +38,11 @@ class CommandeService
             // Retourner les commandes si elles existent, sinon retourner une liste vide
             return $xml->commande ?? [];
         } catch (Exception $e) {
-            \Log::error("Erreur lors de la récupération des commandes : " . $e->getMessage());
+            Log::error("Erreur lors de la récupération des commandes : " . $e->getMessage());
             return [];
         }
     }
 
-    // Ajouter une nouvelle commande
     public function ajouterCommande($data)
     {
         try {
@@ -53,20 +53,20 @@ class CommandeService
                     throw new Exception('Impossible de créer le fichier des commandes.');
                 }
             }
-
+    
             // Charger le fichier XML des commandes
             $commandes = @simplexml_load_file($this->filePath);
             if ($commandes === false) {
                 throw new Exception('Impossible de lire le fichier XML des commandes.');
             }
-
+    
             // Calculer le montant total
             $montantTotal = 0;
             $produits = $this->produitService->getAllProduits(); // Charger tous les produits disponibles
-            foreach ($data['produits'] as $index => $produitId) {
-                $quantite = $data['quantites'][$index]; // Récupérer la quantité associée à ce produit
+            foreach ($data['produits'] as $produitId) {
+                $quantite = $data['quantites'][$produitId]; // Utiliser l'ID du produit comme clé pour récupérer la quantité
                 $produitTrouve = false;
-
+    
                 foreach ($produits as $produit) {
                     if ((string)$produit->id === $produitId) {
                         // Multiplier le prix du produit par sa quantité
@@ -75,37 +75,37 @@ class CommandeService
                         break;
                     }
                 }
-
+    
                 if (!$produitTrouve) {
                     throw new Exception("Le produit avec l'ID {$produitId} n'existe pas.");
                 }
             }
-
+    
             // Ajouter la nouvelle commande
             $nouvelleCommande = $commandes->addChild('commande');
             $nouvelleCommande->addChild('id', uniqid());
             $nouvelleCommande->addChild('client', $data['client']);
             $nouvelleCommande->addChild('montant', $montantTotal);
             $nouvelleCommande->addChild('paye', 'non');
-
+    
             // Ajouter les produits à la commande avec leur quantité respective
             $produitsCommande = $nouvelleCommande->addChild('produits');
-            foreach ($data['produits'] as $index => $produitId) {
-                $quantite = $data['quantites'][$index]; // Récupérer la quantité
+            foreach ($data['produits'] as $produitId) {
+                $quantite = $data['quantites'][$produitId]; // Utiliser l'ID comme clé pour récupérer la quantité
                 $produitCommande = $produitsCommande->addChild('produit');
                 $produitCommande->addChild('id', $produitId);
                 $produitCommande->addChild('quantite', $quantite);
             }
-
+    
             // Sauvegarder les modifications dans le fichier XML
             if ($commandes->asXML($this->filePath) === false) {
                 throw new Exception('Erreur lors de la sauvegarde de la commande.');
             }
         } catch (Exception $e) {
-            \Log::error("Erreur lors de l'ajout de la commande : " . $e->getMessage());
+            Log::error("Erreur lors de l'ajout de la commande : " . $e->getMessage());
             throw $e; // Relancer l'exception pour que le contrôleur puisse gérer l'erreur
         }
-    }
+    }    
 
     public function commandeExiste($id)
     {
@@ -129,6 +129,81 @@ class CommandeService
 
         // Retourner false si la commande n'existe pas
         return false;
+    }
+
+    public function confirmerCommande($id)
+    {
+        try {
+            // Vérifier si le fichier XML existe
+            if (!file_exists($this->filePath) || filesize($this->filePath) === 0) {
+                throw new Exception("Le fichier des commandes est vide ou n'existe pas.");
+            }
+
+            // Charger le fichier XML
+            $commandes = simplexml_load_file($this->filePath);
+            if ($commandes === false) {
+                throw new Exception("Impossible de lire le fichier XML des commandes.");
+            }
+
+            // Parcourir les commandes pour trouver celle avec l'ID correspondant
+            foreach ($commandes->commande as $commande) {
+                if ((string)$commande->id === $id) {
+                    // Mettre l'attribut "paye" à "oui"
+                    $commande->paye = 'oui';
+                    break;
+                }
+            }
+
+            // Sauvegarder les modifications dans le fichier XML
+            if ($commandes->asXML($this->filePath) === false) {
+                throw new Exception("Erreur lors de la sauvegarde de la confirmation de la commande.");
+            }
+        } catch (Exception $e) {
+            Log::error("Erreur lors de la confirmation de la commande : " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function getCommandeById($id)
+    {
+        try {
+            // Vérifier si le fichier XML existe et n'est pas vide
+            if (!file_exists($this->filePath) || filesize($this->filePath) === 0) {
+                throw new Exception("Le fichier des commandes est vide ou n'existe pas.");
+            }
+
+            // Charger le fichier XML
+            $commandes = simplexml_load_file($this->filePath);
+            if ($commandes === false) {
+                throw new Exception("Impossible de lire le fichier XML des commandes.");
+            }
+
+            // Rechercher la commande par ID
+            foreach ($commandes->commande as $commande) {
+                if ((string)$commande->id === $id) {
+                    // Traiter les produits
+                    $produits = [];
+                    foreach ($commande->produits->produit as $produit) {
+                        $produits[] = [
+                            'id' => (string)$produit->id,
+                            'quantite' => (int)$produit->quantite
+                        ];
+                    }
+                    return [
+                        'id' => (string)$commande->id,
+                        'client' => (string)$commande->client,
+                        'montant' => (float)$commande->montant,
+                        'paye' => (string)$commande->paye,
+                        'produits' => $produits
+                    ];
+                }
+            }
+
+            throw new Exception("Commande avec l'ID {$id} non trouvée.");
+        } catch (Exception $e) {
+            Log::error("Erreur lors de la récupération de la commande : " . $e->getMessage());
+            throw $e;
+        }
     }
 
     // Supprimer une commande par ID
@@ -192,7 +267,7 @@ class CommandeService
             return true;
 
         } catch (Exception $e) {
-            \Log::error("Erreur lors de la suppression de la commande : " . $e->getMessage());
+            Log::error("Erreur lors de la suppression de la commande : " . $e->getMessage());
             throw $e; // Relancer l'exception pour gestion dans le contrôleur
         }
     }
@@ -225,7 +300,7 @@ class CommandeService
 
             return $result;
         } catch (Exception $e) {
-            \Log::error("Erreur lors du filtrage des commandes par paiement : " . $e->getMessage());
+            Log::error("Erreur lors du filtrage des commandes par paiement : " . $e->getMessage());
             return []; // Retourner une liste vide en cas d'erreur
         }
     }

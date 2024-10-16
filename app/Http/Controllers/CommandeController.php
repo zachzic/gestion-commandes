@@ -7,6 +7,7 @@ use App\Services\CommandeService;
 use App\Services\ProduitService;
 use Exception;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log; 
 
 class CommandeController extends Controller
 {
@@ -43,6 +44,7 @@ class CommandeController extends Controller
 
     public function store(Request $request)
     {
+        // dd($request);
         // Validation des données d'entrée
         try {
             $data = $request->validate([
@@ -61,16 +63,45 @@ class CommandeController extends Controller
             // En cas d'erreur de validation
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
-
+        
         // Ajout de la commande
         try {
             $this->commandeService->ajouterCommande($data);
             return redirect()->route('commandes.index')->with('success', 'Commande ajoutée avec succès');
         } catch (Exception $e) {
+            // dd($e);
             // Gestion des erreurs lors de l'ajout de la commande
             return redirect()->back()->with('error', 'Une erreur s\'est produite lors de l\'ajout de la commande. Veuillez réessayer.');
         }
     }
+
+    public function confirmer($id)
+    {
+        try {
+            // Vérifier si la commande existe
+            if (!$this->commandeService->commandeExiste($id)) {
+                return redirect()->route('commandes.index')->with('error', 'La commande que vous essayez de confirmer n\'existe pas.');
+            }
+
+            // Confirmer la commande (mettre paye à "oui")
+            $this->commandeService->confirmerCommande($id);
+
+            return redirect()->route('commandes.index')->with('success', 'Commande confirmée avec succès.');
+        } catch (Exception $e) {
+            return redirect()->route('commandes.index')->with('error', 'Une erreur s\'est produite lors de la confirmation de la commande. Veuillez réessayer.');
+        }
+    }
+
+    public function show($id)
+{
+    try {
+        $commande = $this->commandeService->getCommandeById($id);
+        return response()->json($commande);
+    } catch (Exception $e) {
+        Log::error('Erreur lors de la récupération de la commande: ' . $e->getMessage());
+        return response()->json(['error' => 'Une erreur s\'est produite lors de la récupération des détails de la commande'], 500);
+    }
+} 
 
     public function destroy($id)
     {
